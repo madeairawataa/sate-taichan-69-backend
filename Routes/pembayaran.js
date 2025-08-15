@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const Invoice = require('../Utils/xendit');
-const Pesanan = require('../models/Pesanan');
+const Pesanan = require('../Models/Pesanan');
 const Notifikasi = require('../Models/Notifikasi');
 const Menu = require('../Models/Menu');
 
