@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Pesanan = require('../models/Pesanan');
+const Pesanan = require('../Models/Pesanan');
 const Feedback = require('../Models/Feedback');
 const verifyAdmin = require('../Middleware/VerifyAdmin');
 const Menu = require('../Models/Menu');
