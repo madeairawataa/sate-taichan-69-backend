@@ -23,6 +23,24 @@ const updateReservasiStatus = require('./Utils/updateReservasiStatus');
 const app = express();
 const port = process.env.PORT || 5000;
 
+
+// di bawah routes lain
+app.get('/status', async (req, res) => {
+  const orderId = req.query.orderId;
+  if (!orderId) return res.status(400).json({ message: 'orderId is required' });
+
+  try {
+    // Misal ambil data pesanan dari MongoDB
+    const order = await PesananModel.findById(orderId); 
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    res.json({ orderId: order._id, status: order.status });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Konfigurasi Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
