@@ -31,7 +31,7 @@ app.get('/status', async (req, res) => {
 
   try {
     // Misal ambil data pesanan dari MongoDB
-    const order = await PesananModel.findById(orderId); 
+    const order = await Pesanan.findById(orderId); 
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     res.json({ orderId: order._id, status: order.status });
