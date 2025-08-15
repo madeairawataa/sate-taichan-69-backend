@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Pesanan = require('../models/Pesanan');
+const Pesanan = require('../Models/Pesanan');
 const verifyAdmin = require('../Middleware/VerifyAdmin');
 const ReservasiMeja = require('../Models/ReservasiMeja');
 const Menu = require('../Models/Menu'); // DITAMBAHKAN untuk logika tidak laris

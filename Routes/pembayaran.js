@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const Invoice = require('../Utils/xendit');
-const Pesanan = require('../models/Pesanan');
+const Pesanan = require('../Models/Pesanan');
 const Notifikasi = require('../Models/Notifikasi');
 const Menu = require('../Models/Menu');
 
@@ -121,8 +121,8 @@ router.post('/buat-invoice', verifyToken, async (req, res) => {
       payerEmail: email,
       description: `Pembayaran untuk ${tipe === 'menu' ? 'menu makanan' : 'reservasi meja'} oleh ${nama}`,
       amount: total,
-      successRedirectURL: `http://localhost:3000/status?orderId=${simpan._id}`,
-      callbackURL: 'http://localhost:5000/api/pembayaran/callback',
+      successRedirectURL: `http://70.153.136.221:5000/status?orderId=${simpan._id}`,
+      callbackURL: 'http://70.153.136.221:5000/api/pembayaran/callback',
     });
 
     res.json({ invoiceUrl: response.invoice_url, pesananId: simpan._id });
@@ -251,7 +251,7 @@ router.post('/buat-invoice', async (req, res) => {
       payerEmail,
       description,
       amount,
-      successRedirectURL: `http://localhost:3000/status-reservasi/${externalID}`,
+      successRedirectURL: `http://70.153.136.221:5000/status-reservasi/${externalID}`,
       metadata: {
         nama,
         meja,

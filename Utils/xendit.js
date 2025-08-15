@@ -16,7 +16,7 @@ const createInvoice = async ({
       payer_email: payerEmail,
       description,
       amount,
-      success_redirect_url: successRedirectURL || 'http://localhost:3000/status',
+      success_redirect_url: successRedirectURL || 'https://sate-taichan-69-frontend.vercel.app/status',
       currency: 'IDR',
       metadata: metadata || {}
     },

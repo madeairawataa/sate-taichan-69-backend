@@ -127,7 +127,7 @@ router.post('/buat-invoice', async (req, res) => {
       payerEmail,
       description,
       amount,
-      successRedirectURL: `http://localhost:3000/status-reservasi/${externalID}`,
+      successRedirectURL: `http://70.153.136.221:5000/status-reservasi/${externalID}`,
       metadata: {
         nama,
         meja,

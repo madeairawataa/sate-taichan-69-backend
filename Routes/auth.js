@@ -4,7 +4,7 @@ const User = require('../Models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const otpGenerator = require('otp-generator');
-const { kirimKodeOTP } = require('../utils/email');
+const { kirimKodeOTP } = require('../Utils/email');
 
 require('dotenv').config();
 const SECRET_KEY = process.env.JWT_SECRET || 'your_jwt_secret';
