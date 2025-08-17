@@ -23,6 +23,33 @@ const updateReservasiStatus = require('./Utils/updateReservasiStatus');
 const app = express();
 const port = process.env.PORT || 5000;
 
+// Route untuk cek status reservasi/pesanan
+app.get("/status", async (req, res) => {
+  try {
+    const { orderId } = req.query;
+    if (!orderId) {
+      return res.status(400).json({ error: "orderId wajib dikirim" });
+    }
+
+    const reservasi = await Reservasi.findById(orderId);
+    if (!reservasi) {
+      return res.status(404).json({ error: "Reservasi tidak ditemukan" });
+    }
+
+    res.json({
+      orderId: reservasi._id,
+      nama: reservasi.nama,
+      status: reservasi.status, // contoh: "Menunggu", "Diterima", "Selesai"
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Terjadi kesalahan server" });
+  }
+});
+
+app.listen(5000, () => {
+  console.log("Server running on port 5000");
+});
 
 // Konfigurasi Cloudinary
 cloudinary.config({
