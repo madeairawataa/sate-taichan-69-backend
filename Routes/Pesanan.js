@@ -262,6 +262,10 @@ router.delete('/:id', verifyAdmin, async (req, res) => {
   }
 });
 
+// ============================
+// GET: Struk Pemesanan
+// ============================
+
 router.get('/:id/struk', async (req, res) => {
   try {
     const pesanan = await Pesanan.findById(req.params.id);
@@ -269,12 +273,10 @@ router.get('/:id/struk', async (req, res) => {
     if (!pesanan) {
       return res.status(404).send('<h2>❌ Pesanan tidak ditemukan</h2>');
     }
-
-    // Format tanggal pesan & cetak
+S
     const tanggalPesan = new Date(pesanan.createdAt).toLocaleString('id-ID');
     const tanggalCetak = new Date().toLocaleString('id-ID');
 
-    // Tabel item
     const itemsHtml = pesanan.items.map((item) => `
       <tr>
         <td>${item.nama}</td>
@@ -346,9 +348,23 @@ router.get('/:id/struk', async (req, res) => {
           <h2>TERIMA KASIH</h2>
           <p class="center">Selamat menikmati makanan Anda!</p>
 
-          <button class="btn" onclick="window.print()">⬇️ Download Struk</button>
+          <button class="btn" onclick="downloadStruk()">⬇️ Download Struk</button>
           <button class="btn" onclick="window.location.href='https://sate-taichan-69-frontend.vercel.app/'">🏠 Kembali ke Home</button>
         </div>
+
+        <script>
+          function downloadStruk() {
+            const struk = document.getElementById("struk").outerHTML;
+            const blob = new Blob(
+              ["<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Struk</title></head><body>" + struk + "</body></html>"], 
+              { type: "text/html" }
+            );
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "struk-${pesanan.nomorPesanan}.html";
+            link.click();
+          }
+        </script>
       </body>
       </html>
     `;
