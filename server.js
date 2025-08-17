@@ -23,29 +23,20 @@ const updateReservasiStatus = require('./Utils/updateReservasiStatus');
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Route untuk cek status reservasi/pesanan
-app.get("/status", async (req, res) => {
+app.get('/status', async (req, res) => {
   try {
     const { orderId } = req.query;
-    if (!orderId) {
-      return res.status(400).json({ error: "orderId wajib dikirim" });
+    const pesanan = await Pesanan.findById(orderId);  // <== cek by ID
+    if (!pesanan) {
+      return res.status(404).json({ message: 'Pesanan tidak ditemukan' });
     }
-
-    const reservasi = await Reservasi.findById(orderId);
-    if (!reservasi) {
-      return res.status(404).json({ error: "Reservasi tidak ditemukan" });
-    }
-
-    res.json({
-      orderId: reservasi._id,
-      nama: reservasi.nama,
-      status: reservasi.status, // contoh: "Menunggu", "Diterima", "Selesai"
-    });
+    res.json(pesanan);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Terjadi kesalahan server" });
+    res.status(500).json({ message: 'Terjadi kesalahan server' });
   }
 });
+
 
 app.listen(5000, () => {
   console.log("Server running on port 5000");
