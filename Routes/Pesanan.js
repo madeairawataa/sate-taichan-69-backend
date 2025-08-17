@@ -273,7 +273,7 @@ router.get('/:id/struk', async (req, res) => {
     if (!pesanan) {
       return res.status(404).send('<h2>❌ Pesanan tidak ditemukan</h2>');
     }
-S
+
     const tanggalPesan = new Date(pesanan.createdAt).toLocaleString('id-ID');
     const tanggalCetak = new Date().toLocaleString('id-ID');
 
