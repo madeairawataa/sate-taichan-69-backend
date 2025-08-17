@@ -8,6 +8,8 @@ const Notifikasi = require('../Models/Notifikasi');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
+import PDFDocument from "pdfkit";
+
 
 
 // Middleware untuk memverifikasi token
@@ -215,7 +217,60 @@ router.put('/:id/status', async (req, res) => {
 // ============================
 // GET: Ambil pesanan berdasarkan ID
 // ============================
+router.get('/:id', async (req, res) => {
+  try {
+    const pesanan = await Pesanan.findById(req.params.id);
+    if (!pesanan) {
+      return res.status(404).json({ error: 'Pesanan tidak ditemukan.' });
+    }
 
+    // Ambil feedback terkait
+    const feedback = await Feedback.findOne({ pesananId: pesanan._id.toString() });
+
+    const responseData = {
+      ...pesanan.toObject(),
+      feedback: feedback
+        ? {
+            rating: feedback.rating,
+            komentar: feedback.komentar,
+          }
+        : {
+            rating: 0,
+            komentar: '',
+          },
+    };
+
+    res.json(responseData);
+  } catch (err) {
+    console.error('Gagal ambil pesanan by ID:', err);
+    res.status(500).json({ error: 'Server error', detail: err.message });
+  }
+});
+
+// ============================
+// DELETE: Hapus pesanan
+// ============================
+router.delete('/:id', verifyAdmin, async (req, res) => {
+  try {
+    const deleted = await Pesanan.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'Pesanan tidak ditemukan.' });
+
+    await Notifikasi.deleteMany({ refId: deleted._id });
+
+    res.json({ message: 'Pesanan dan notifikasi berhasil dihapus.', data: deleted });
+  } catch (err) {
+    console.error('Error saat menghapus pesanan:', err);
+    res.status(500).json({ error: 'Gagal menghapus pesanan', detail: err.message });
+  }
+});
+
+// ============================
+// GET: STRUK pesanan
+// ============================
+
+// ============================
+// GET: STRUK pesanan (PDF)
+// ============================
 router.get('/:id/struk', async (req, res) => {
   try {
     const pesanan = await Pesanan.findById(req.params.id);
@@ -300,7 +355,6 @@ router.get('/:id/struk', async (req, res) => {
     res.status(500).send('<h2>Terjadi kesalahan</h2>');
   }
 });
-
 
 
 module.exports = router;
