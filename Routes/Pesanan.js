@@ -124,7 +124,7 @@ router.post('/buat-invoice', verifyToken, async (req, res) => {
       payerEmail: email,
       description: `Pembayaran untuk ${tipe === 'menu' ? 'menu makanan' : 'reservasi meja'} oleh ${nama}`,
       amount: total,
-      successRedirectURL: `http://70.153.136.221:5000/status?orderId=${simpan._id}/struk`,
+      successRedirectURL: `http://70.153.136.221:5000/api/pesanan/${simpan._id}/struk`,
       callbackURL: 'http://70.153.136.221:5000/api/pembayaran/callback',
     });
 
