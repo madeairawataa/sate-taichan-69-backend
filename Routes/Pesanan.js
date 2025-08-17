@@ -9,6 +9,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 
+
 // Middleware untuk memverifikasi token
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -261,7 +262,6 @@ router.delete('/:id', verifyAdmin, async (req, res) => {
   }
 });
 
-// Endpoint untuk menampilkan struk sederhana
 router.get('/:id/struk', async (req, res) => {
   try {
     const pesanan = await Pesanan.findById(req.params.id);
@@ -270,10 +270,13 @@ router.get('/:id/struk', async (req, res) => {
       return res.status(404).send('<h2>❌ Pesanan tidak ditemukan</h2>');
     }
 
-    // Buat isi tabel pesanan
-    const itemsHtml = pesanan.items.map((item, i) => `
+    // Format tanggal pesan & cetak
+    const tanggalPesan = new Date(pesanan.createdAt).toLocaleString('id-ID');
+    const tanggalCetak = new Date().toLocaleString('id-ID');
+
+    // Tabel item
+    const itemsHtml = pesanan.items.map((item) => `
       <tr>
-        <td>${i + 1}</td>
         <td>${item.nama}</td>
         <td>${item.jumlah}</td>
         <td>Rp ${item.harga.toLocaleString('id-ID')}</td>
@@ -281,61 +284,53 @@ router.get('/:id/struk', async (req, res) => {
       </tr>
     `).join('');
 
-    // HTML struk kecil + tombol download & kembali
     const html = `
       <!DOCTYPE html>
       <html lang="id">
       <head>
         <meta charset="UTF-8">
         <title>Struk Pesanan</title>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
         <style>
-          body { 
-            font-family: Arial, sans-serif; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            background: #f5f5f5;
-            height: 100vh;
-          }
+          body { font-family: monospace; display:flex; justify-content:center; background:#f5f5f5; padding:20px; }
           .struk {
-            width: 280px;
+            width: 300px;
             background: white;
             padding: 15px;
             border: 1px dashed #000;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            font-size: 12px;
           }
-          h2 { text-align: center; margin-bottom: 10px; font-size: 14px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-          th, td { padding: 4px; text-align: center; border-bottom: 1px solid #ddd; font-size: 12px; }
-          .total { font-weight: bold; font-size: 13px; text-align: right; margin-top: 10px; }
-          .footer { text-align: center; margin-top: 15px; font-style: italic; }
-          .btn {
-            margin-top: 10px;
-            width: 100%;
-            padding: 6px;
-            font-size: 12px;
-            background: black;
-            color: white;
-            border: none;
-            cursor: pointer;
-          }
+          h1 { text-align:center; font-size:16px; color:green; margin:0 0 10px 0; }
+          h2 { text-align:center; font-size:14px; margin:5px 0; }
+          .center { text-align:center; }
+          .divider { border-top:1px dashed #000; margin:8px 0; }
+          table { width:100%; border-collapse:collapse; font-size:12px; }
+          th, td { padding:4px; text-align:center; }
+          .total { font-weight:bold; font-size:13px; text-align:right; margin-top:8px; }
+          .footer { text-align:center; margin-top:12px; font-size:11px; }
+          .btn { margin-top:10px; width:100%; padding:6px; font-size:12px; background:black; color:white; border:none; cursor:pointer; }
         </style>
       </head>
       <body>
         <div class="struk" id="struk">
-          <h2>STRUK PESANAN</h2>
-          <p><b>No Pesanan:</b> ${pesanan.nomorPesanan}</p>
-          <p><b>Nama:</b> ${pesanan.namaPemesan}</p>
-          <p><b>Meja:</b> ${pesanan.nomorMeja}</p>
-          <p><b>Status:</b> ${pesanan.status}</p>
+          <h1>✅ PEMBAYARAN BERHASIL</h1>
+          <h2>SATE TAICHAN 69</h2>
+          <p class="center">Mertasari Culinary Center, Pantai Mertasari, Sanur, Bali<br>
+          Telp: 087759744555</p>
+          <div class="divider"></div>
 
+          <p><b>No. Pesanan:</b> ${pesanan.nomorPesanan}</p>
+          <p><b>Tanggal Pesan:</b> ${tanggalPesan}</p>
+          <p><b>Tanggal Cetak:</b> ${tanggalCetak}</p>
+
+          <div class="divider"></div>
+          <p><b>DETAIL PESANAN</b></p>
+          <p>Nama Pemesan: ${pesanan.namaPemesan}</p>
+          <p>Tipe Pesanan: ${pesanan.tipePesanan || '-'}</p>
+
+          <div class="divider"></div>
           <table>
             <thead>
               <tr>
-                <th>No</th>
-                <th>Menu</th>
+                <th>Item</th>
                 <th>Qty</th>
                 <th>Harga</th>
                 <th>Subtotal</th>
@@ -345,44 +340,15 @@ router.get('/:id/struk', async (req, res) => {
               ${itemsHtml}
             </tbody>
           </table>
+          <p class="total">TOTAL : Rp ${pesanan.totalHarga.toLocaleString('id-ID')}</p>
 
-          <p class="total">Total: Rp ${pesanan.totalHarga.toLocaleString('id-ID')}</p>
-          <p class="footer">Terima kasih 🙏</p>
+          <p class="footer">Simpan struk ini sebagai bukti pesanan.<br>Untuk informasi lebih lanjut hubungi nomor di atas.</p>
+          <h2>TERIMA KASIH</h2>
+          <p class="center">Selamat menikmati makanan Anda!</p>
 
-          <button class="btn" onclick="downloadPDF()">⬇️ Download Struk</button>
+          <button class="btn" onclick="window.print()">⬇️ Download Struk</button>
           <button class="btn" onclick="window.location.href='https://sate-taichan-69-frontend.vercel.app/'">🏠 Kembali ke Home</button>
         </div>
-
-        <script>
-          async function downloadPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({
-              orientation: "p",
-              unit: "mm",
-              format: [80, 150] // ukuran struk kecil
-            });
-
-            doc.setFontSize(12);
-            doc.text("STRUK PESANAN", 40, 10, { align: "center" });
-
-            doc.setFontSize(9);
-            doc.text("No Pesanan: ${pesanan.nomorPesanan}", 5, 20);
-            doc.text("Nama: ${pesanan.namaPemesan}", 5, 26);
-            doc.text("Meja: ${pesanan.nomorMeja}", 5, 32);
-            doc.text("Status: ${pesanan.status}", 5, 38);
-
-            let startY = 48;
-            ${JSON.stringify(pesanan.items)}.forEach((item) => {
-              doc.text(item.nama + " x" + item.jumlah, 5, startY);
-              doc.text("Rp " + (item.harga * item.jumlah).toLocaleString("id-ID"), 75, startY, { align: "right" });
-              startY += 6;
-            });
-
-            doc.text("Total: Rp ${pesanan.totalHarga.toLocaleString('id-ID')}", 5, startY + 10);
-
-            doc.save("struk-${pesanan.nomorPesanan}.pdf");
-          }
-        </script>
       </body>
       </html>
     `;
@@ -394,9 +360,6 @@ router.get('/:id/struk', async (req, res) => {
     res.status(500).send('<h2>Terjadi kesalahan</h2>');
   }
 });
-
-
-
 
 
 module.exports = router;
