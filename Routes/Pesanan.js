@@ -124,7 +124,7 @@ router.post('/buat-invoice', verifyToken, async (req, res) => {
       payerEmail: email,
       description: `Pembayaran untuk ${tipe === 'menu' ? 'menu makanan' : 'reservasi meja'} oleh ${nama}`,
       amount: total,
-      successRedirectURL: `http://70.153.136.221:5000/status?orderId=${simpan._id}`,
+      successRedirectURL: `http://70.153.136.221:5000/status?orderId=${simpan._id}/struk`,
       callbackURL: 'http://70.153.136.221:5000/api/pembayaran/callback',
     });
 
@@ -260,5 +260,81 @@ router.delete('/:id', verifyAdmin, async (req, res) => {
     res.status(500).json({ error: 'Gagal menghapus pesanan', detail: err.message });
   }
 });
+
+// ============================
+// GET: Struk sederhana setelah pembayaran berhasil
+// ============================
+router.get('/:id/struk', async (req, res) => {
+  try {
+    const pesanan = await Pesanan.findById(req.params.id);
+    if (!pesanan) {
+      return res.status(404).send('<h2>Pesanan tidak ditemukan</h2>');
+    }
+
+    let itemsHTML = '';
+    pesanan.items.forEach(item => {
+      itemsHTML += `
+        <tr>
+          <td>${item.nama}</td>
+          <td>${item.jumlah}</td>
+          <td>Rp ${item.harga?.toLocaleString('id-ID')}</td>
+        </tr>
+      `;
+    });
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="id">
+      <head>
+        <meta charset="UTF-8">
+        <title>Struk Pesanan ${pesanan.nomorPesanan}</title>
+        <style>
+          body { font-family: Arial, sans-serif; background:#f8f8f8; padding:20px; }
+          .struk { max-width:600px; margin:0 auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+          h2, h3 { text-align:center; }
+          table { width:100%; border-collapse: collapse; margin-top:15px; }
+          th, td { border:1px solid #ddd; padding:8px; text-align:left; }
+          th { background:#f2f2f2; }
+          .total { text-align:right; font-weight:bold; margin-top:15px; }
+          .print-btn { display:block; margin:20px auto; padding:10px 20px; background:#ff6b35; color:white; text-decoration:none; border-radius:6px; text-align:center; }
+          .print-btn:hover { background:#e55a28; }
+        </style>
+      </head>
+      <body>
+        <div class="struk">
+          <h2>✅ Pembayaran Berhasil</h2>
+          <h3>Struk Pesanan</h3>
+          <p><strong>No. Pesanan:</strong> ${pesanan.nomorPesanan}</p>
+          <p><strong>Nama Pemesan:</strong> ${pesanan.namaPemesan}</p>
+          <p><strong>Meja:</strong> ${pesanan.nomorMeja}</p>
+          <p><strong>Tipe:</strong> ${pesanan.tipePesanan}</p>
+          <hr/>
+          <table>
+            <thead>
+              <tr>
+                <th>Menu</th>
+                <th>Jumlah</th>
+                <th>Harga</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHTML}
+            </tbody>
+          </table>
+          <p class="total">Total: Rp ${pesanan.totalHarga.toLocaleString('id-ID')}</p>
+          <p><strong>Status:</strong> ${pesanan.status}</p>
+          <a href="javascript:window.print()" class="print-btn">Cetak / Simpan PDF</a>
+        </div>
+      </body>
+      </html>
+    `;
+
+    res.send(html);
+  } catch (err) {
+    console.error('Gagal buat struk:', err);
+    res.status(500).send('<h2>Terjadi kesalahan server</h2>');
+  }
+});
+
 
 module.exports = router;
