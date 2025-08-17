@@ -261,77 +261,78 @@ router.delete('/:id', verifyAdmin, async (req, res) => {
   }
 });
 
-// ✅ GET: Halaman struk setelah pembayaran
-router.get('/api/pesanan/:id/struk', async (req, res) => {
+// Endpoint untuk menampilkan struk sederhana
+router.get('/:id/struk', async (req, res) => {
   try {
-    const pesanan = await Pesanan.findById(req.params.id);
+    const pesanan = await Pesanan.findById(req.params.id).populate('items.id');
 
     if (!pesanan) {
       return res.status(404).send('<h2>❌ Pesanan tidak ditemukan</h2>');
     }
 
-    // HTML sederhana struk
-    res.send(`
+    // Buat isi tabel pesanan
+    const itemsHtml = pesanan.items.map((item, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${item.nama}</td>
+        <td>${item.jumlah}</td>
+        <td>Rp ${item.harga.toLocaleString('id-ID')}</td>
+        <td>Rp ${(item.harga * item.jumlah).toLocaleString('id-ID')}</td>
+      </tr>
+    `).join('');
+
+    // HTML struk sederhana
+    const html = `
       <!DOCTYPE html>
       <html lang="id">
       <head>
         <meta charset="UTF-8">
-        <title>Struk Pembayaran</title>
+        <title>Struk Pesanan</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 20px; }
-          .struk { max-width: 500px; margin: auto; border: 1px solid #ccc; border-radius: 8px; padding: 20px; }
           h2 { text-align: center; }
-          table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-          table th, table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          table th { background: #f4f4f4; }
-          .total { text-align: right; font-size: 18px; margin-top: 10px; }
-          .thanks { text-align: center; margin-top: 20px; font-size: 14px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          table, th, td { border: 1px solid black; }
+          th, td { padding: 8px; text-align: center; }
+          .total { font-weight: bold; font-size: 16px; text-align: right; }
         </style>
-        <script>
-          // Redirect otomatis setelah 7 detik
-          setTimeout(() => {
-            window.location.href = "/";
-          }, 7000);
-        </script>
       </head>
       <body>
-        <div class="struk">
-          <h2>✅ Pembayaran Berhasil</h2>
-          <p><b>No. Pesanan:</b> ${pesanan.nomorPesanan}</p>
-          <p><b>Nama:</b> ${pesanan.namaPemesan}</p>
-          <p><b>Meja:</b> ${pesanan.nomorMeja}</p>
-          <hr/>
-          <table>
-            <thead>
-              <tr>
-                <th>Menu</th>
-                <th>Qty</th>
-                <th>Harga</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${pesanan.items.map(item => `
-                <tr>
-                  <td>${item.nama}</td>
-                  <td>${item.qty}</td>
-                  <td>Rp ${item.harga.toLocaleString('id-ID')}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-          <div class="total">
-            <b>Total: Rp ${pesanan.totalHarga.toLocaleString('id-ID')}</b>
-          </div>
-          <p class="thanks">Terima kasih telah memesan. Anda akan diarahkan ke halaman utama...</p>
-        </div>
+        <h2>STRUK PESANAN</h2>
+        <p><b>Nomor Pesanan:</b> ${pesanan.nomorPesanan}</p>
+        <p><b>Nama Pemesan:</b> ${pesanan.namaPemesan}</p>
+        <p><b>Nomor Meja:</b> ${pesanan.nomorMeja}</p>
+        <p><b>Status:</b> ${pesanan.status}</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Menu</th>
+              <th>Jumlah</th>
+              <th>Harga</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+
+        <p class="total">Total: Rp ${pesanan.totalHarga.toLocaleString('id-ID')}</p>
+        <p><i>Terima kasih sudah memesan 🙏</i></p>
       </body>
       </html>
-    `);
-  } catch (err) {
-    console.error('❌ Error struk:', err);
-    res.status(500).send('<h2>Terjadi kesalahan server</h2>');
+    `;
+
+    res.send(html);
+
+  } catch (error) {
+    console.error('❌ Gagal menampilkan struk:', error);
+    res.status(500).send('<h2>Terjadi kesalahan</h2>');
   }
 });
+
 
 
 module.exports = router;
