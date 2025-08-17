@@ -350,7 +350,7 @@ router.get('/:id/struk', async (req, res) => {
           <p class="footer">Terima kasih 🙏</p>
 
           <button class="btn" onclick="downloadPDF()">⬇️ Download Struk</button>
-          <button class="btn" onclick="window.location.href='/'">🏠 Kembali ke Home</button>
+          <button class="btn" onclick="window.location.href='https://sate-taichan-69-frontend.vercel.app/'">🏠 Kembali ke Home</button>
         </div>
 
         <script>
@@ -359,7 +359,7 @@ router.get('/:id/struk', async (req, res) => {
             const doc = new jsPDF({
               orientation: "p",
               unit: "mm",
-              format: [80, 150]
+              format: [80, 150] // ukuran struk kecil
             });
 
             doc.setFontSize(12);
@@ -368,12 +368,13 @@ router.get('/:id/struk', async (req, res) => {
             doc.setFontSize(9);
             doc.text("No Pesanan: ${pesanan.nomorPesanan}", 5, 20);
             doc.text("Nama: ${pesanan.namaPemesan}", 5, 26);
+            doc.text("Meja: ${pesanan.nomorMeja}", 5, 32);
+            doc.text("Status: ${pesanan.status}", 5, 38);
 
-            // tabel manual sederhana
-            let startY = 35;
-            ${JSON.stringify(pesanan.items)}.forEach((item, idx) => {
+            let startY = 48;
+            ${JSON.stringify(pesanan.items)}.forEach((item) => {
               doc.text(item.nama + " x" + item.jumlah, 5, startY);
-              doc.text("Rp " + (item.harga * item.jumlah).toLocaleString("id-ID"), 60, startY, { align: "right" });
+              doc.text("Rp " + (item.harga * item.jumlah).toLocaleString("id-ID"), 75, startY, { align: "right" });
               startY += 6;
             });
 
@@ -393,6 +394,7 @@ router.get('/:id/struk', async (req, res) => {
     res.status(500).send('<h2>Terjadi kesalahan</h2>');
   }
 });
+
 
 
 
