@@ -261,77 +261,74 @@ router.delete('/:id', verifyAdmin, async (req, res) => {
   }
 });
 
-// ============================
-// GET: Struk sederhana setelah pembayaran berhasil
-// ============================
-router.get('/:id/struk', async (req, res) => {
+// ✅ GET: Halaman struk setelah pembayaran
+router.get('/api/pesanan/:id/struk', async (req, res) => {
   try {
     const pesanan = await Pesanan.findById(req.params.id);
+
     if (!pesanan) {
-      return res.status(404).send('<h2>Pesanan tidak ditemukan</h2>');
+      return res.status(404).send('<h2>❌ Pesanan tidak ditemukan</h2>');
     }
 
-    let itemsHTML = '';
-    pesanan.items.forEach(item => {
-      itemsHTML += `
-        <tr>
-          <td>${item.nama}</td>
-          <td>${item.jumlah}</td>
-          <td>Rp ${item.harga?.toLocaleString('id-ID')}</td>
-        </tr>
-      `;
-    });
-
-    const html = `
+    // HTML sederhana struk
+    res.send(`
       <!DOCTYPE html>
       <html lang="id">
       <head>
         <meta charset="UTF-8">
-        <title>Struk Pesanan ${pesanan.nomorPesanan}</title>
+        <title>Struk Pembayaran</title>
         <style>
-          body { font-family: Arial, sans-serif; background:#f8f8f8; padding:20px; }
-          .struk { max-width:600px; margin:0 auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
-          h2, h3 { text-align:center; }
-          table { width:100%; border-collapse: collapse; margin-top:15px; }
-          th, td { border:1px solid #ddd; padding:8px; text-align:left; }
-          th { background:#f2f2f2; }
-          .total { text-align:right; font-weight:bold; margin-top:15px; }
-          .print-btn { display:block; margin:20px auto; padding:10px 20px; background:#ff6b35; color:white; text-decoration:none; border-radius:6px; text-align:center; }
-          .print-btn:hover { background:#e55a28; }
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          .struk { max-width: 500px; margin: auto; border: 1px solid #ccc; border-radius: 8px; padding: 20px; }
+          h2 { text-align: center; }
+          table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+          table th, table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          table th { background: #f4f4f4; }
+          .total { text-align: right; font-size: 18px; margin-top: 10px; }
+          .thanks { text-align: center; margin-top: 20px; font-size: 14px; }
         </style>
+        <script>
+          // Redirect otomatis setelah 7 detik
+          setTimeout(() => {
+            window.location.href = "/";
+          }, 7000);
+        </script>
       </head>
       <body>
         <div class="struk">
           <h2>✅ Pembayaran Berhasil</h2>
-          <h3>Struk Pesanan</h3>
-          <p><strong>No. Pesanan:</strong> ${pesanan.nomorPesanan}</p>
-          <p><strong>Nama Pemesan:</strong> ${pesanan.namaPemesan}</p>
-          <p><strong>Meja:</strong> ${pesanan.nomorMeja}</p>
-          <p><strong>Tipe:</strong> ${pesanan.tipePesanan}</p>
+          <p><b>No. Pesanan:</b> ${pesanan.nomorPesanan}</p>
+          <p><b>Nama:</b> ${pesanan.namaPemesan}</p>
+          <p><b>Meja:</b> ${pesanan.nomorMeja}</p>
           <hr/>
           <table>
             <thead>
               <tr>
                 <th>Menu</th>
-                <th>Jumlah</th>
+                <th>Qty</th>
                 <th>Harga</th>
               </tr>
             </thead>
             <tbody>
-              ${itemsHTML}
+              ${pesanan.items.map(item => `
+                <tr>
+                  <td>${item.nama}</td>
+                  <td>${item.qty}</td>
+                  <td>Rp ${item.harga.toLocaleString('id-ID')}</td>
+                </tr>
+              `).join('')}
             </tbody>
           </table>
-          <p class="total">Total: Rp ${pesanan.totalHarga.toLocaleString('id-ID')}</p>
-          <p><strong>Status:</strong> ${pesanan.status}</p>
-          <a href="javascript:window.print()" class="print-btn">Cetak / Simpan PDF</a>
+          <div class="total">
+            <b>Total: Rp ${pesanan.totalHarga.toLocaleString('id-ID')}</b>
+          </div>
+          <p class="thanks">Terima kasih telah memesan. Anda akan diarahkan ke halaman utama...</p>
         </div>
       </body>
       </html>
-    `;
-
-    res.send(html);
+    `);
   } catch (err) {
-    console.error('Gagal buat struk:', err);
+    console.error('❌ Error struk:', err);
     res.status(500).send('<h2>Terjadi kesalahan server</h2>');
   }
 });
