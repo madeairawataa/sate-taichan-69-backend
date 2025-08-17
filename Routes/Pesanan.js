@@ -215,56 +215,6 @@ router.put('/:id/status', async (req, res) => {
 // ============================
 // GET: Ambil pesanan berdasarkan ID
 // ============================
-router.get('/:id', async (req, res) => {
-  try {
-    const pesanan = await Pesanan.findById(req.params.id);
-    if (!pesanan) {
-      return res.status(404).json({ error: 'Pesanan tidak ditemukan.' });
-    }
-
-    // Ambil feedback terkait
-    const feedback = await Feedback.findOne({ pesananId: pesanan._id.toString() });
-
-    const responseData = {
-      ...pesanan.toObject(),
-      feedback: feedback
-        ? {
-            rating: feedback.rating,
-            komentar: feedback.komentar,
-          }
-        : {
-            rating: 0,
-            komentar: '',
-          },
-    };
-
-    res.json(responseData);
-  } catch (err) {
-    console.error('Gagal ambil pesanan by ID:', err);
-    res.status(500).json({ error: 'Server error', detail: err.message });
-  }
-});
-
-// ============================
-// DELETE: Hapus pesanan
-// ============================
-router.delete('/:id', verifyAdmin, async (req, res) => {
-  try {
-    const deleted = await Pesanan.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ error: 'Pesanan tidak ditemukan.' });
-
-    await Notifikasi.deleteMany({ refId: deleted._id });
-
-    res.json({ message: 'Pesanan dan notifikasi berhasil dihapus.', data: deleted });
-  } catch (err) {
-    console.error('Error saat menghapus pesanan:', err);
-    res.status(500).json({ error: 'Gagal menghapus pesanan', detail: err.message });
-  }
-});
-
-// ============================
-// GET: STRUK pesanan
-// ============================
 
 router.get('/:id/struk', async (req, res) => {
   try {
@@ -277,105 +227,80 @@ router.get('/:id/struk', async (req, res) => {
     const tanggalPesan = new Date(pesanan.createdAt).toLocaleString('id-ID');
     const tanggalCetak = new Date().toLocaleString('id-ID');
 
-    const itemsHtml = pesanan.items.map((item) => `
-      <tr>
-        <td>${item.nama}</td>
-        <td>${item.jumlah}</td>
-        <td>Rp ${item.harga.toLocaleString('id-ID')}</td>
-        <td>Rp ${(item.harga * item.jumlah).toLocaleString('id-ID')}</td>
-      </tr>
-    `).join('');
+    // Buat dokumen PDF
+    const doc = new PDFDocument({ margin: 30, size: "A4" });
 
-    const html = `
-      <!DOCTYPE html>
-      <html lang="id">
-      <head>
-        <meta charset="UTF-8">
-        <title>Struk Pesanan</title>
-        <style>
-          body { font-family: monospace; display:flex; justify-content:center; background:#f5f5f5; padding:20px; }
-          .struk {
-            width: 300px;
-            background: white;
-            padding: 15px;
-            border: 1px dashed #000;
-          }
-          h1 { text-align:center; font-size:16px; color:green; margin:0 0 10px 0; }
-          h2 { text-align:center; font-size:14px; margin:5px 0; }
-          .center { text-align:center; }
-          .divider { border-top:1px dashed #000; margin:8px 0; }
-          table { width:100%; border-collapse:collapse; font-size:12px; }
-          th, td { padding:4px; text-align:center; }
-          .total { font-weight:bold; font-size:13px; text-align:right; margin-top:8px; }
-          .footer { text-align:center; margin-top:12px; font-size:11px; }
-          .btn { margin-top:10px; width:100%; padding:6px; font-size:12px; background:black; color:white; border:none; cursor:pointer; }
-        </style>
-      </head>
-      <body>
-        <div class="struk" id="struk">
-          <h1>✅ PEMBAYARAN BERHASIL</h1>
-          <h2>SATE TAICHAN 69</h2>
-          <p class="center">Mertasari Culinary Center, Pantai Mertasari, Sanur, Bali<br>
-          Telp: 087759744555</p>
-          <div class="divider"></div>
+    // Setting header agar langsung download
+    res.setHeader('Content-disposition', `attachment; filename=struk-${pesanan.nomorPesanan}.pdf`);
+    res.setHeader('Content-type', 'application/pdf');
 
-          <p><b>No. Pesanan:</b> ${pesanan.nomorPesanan}</p>
-          <p><b>Tanggal Pesan:</b> ${tanggalPesan}</p>
-          <p><b>Tanggal Cetak:</b> ${tanggalCetak}</p>
+    // Pipe PDF ke response
+    doc.pipe(res);
 
-          <div class="divider"></div>
-          <p><b>DETAIL PESANAN</b></p>
-          <p>Nama Pemesan: ${pesanan.namaPemesan}</p>
-          <p>Tipe Pesanan: ${pesanan.tipePesanan || '-'}</p>
+    // ==========================
+    // ISI STRUK
+    // ==========================
+    doc.fontSize(16).fillColor("green").text("✅ PEMBAYARAN BERHASIL", { align: "center" });
+    doc.moveDown(0.5);
+    doc.fontSize(14).fillColor("black").text("SATE TAICHAN 69", { align: "center" });
+    doc.moveDown();
+    doc.fontSize(10).text("Mertasari Culinary Center, Pantai Mertasari, Sanur, Bali", { align: "center" });
+    doc.text("Telp: 087759744555", { align: "center" });
+    doc.moveDown();
 
-          <div class="divider"></div>
-          <table>
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Qty</th>
-                <th>Harga</th>
-                <th>Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsHtml}
-            </tbody>
-          </table>
-          <p class="total">TOTAL : Rp ${pesanan.totalHarga.toLocaleString('id-ID')}</p>
+    doc.moveTo(30, doc.y).lineTo(550, doc.y).dash(2, { space: 2 }).stroke();
+    doc.moveDown();
 
-          <p class="footer">Simpan struk ini sebagai bukti pesanan.<br>Untuk informasi lebih lanjut hubungi nomor di atas.</p>
-          <h2>TERIMA KASIH</h2>
-          <p class="center">Selamat menikmati makanan Anda!</p>
+    doc.fontSize(10).text(`No. Pesanan: ${pesanan.nomorPesanan}`);
+    doc.text(`Tanggal Pesan: ${tanggalPesan}`);
+    doc.text(`Tanggal Cetak: ${tanggalCetak}`);
+    doc.moveDown();
 
-          <button class="btn" onclick="downloadStruk()">⬇️ Download Struk</button>
-          <button class="btn" onclick="window.location.href='https://sate-taichan-69-frontend.vercel.app/'">🏠 Kembali ke Home</button>
-        </div>
+    doc.text(`Nama Pemesan: ${pesanan.namaPemesan}`);
+    doc.text(`Tipe Pesanan: ${pesanan.tipePesanan || '-'}`);
+    doc.moveDown();
 
-        <script>
-          function downloadStruk() {
-            const struk = document.getElementById("struk").outerHTML;
-            const blob = new Blob(
-              ["<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Struk</title></head><body>" + struk + "</body></html>"], 
-              { type: "text/html" }
-            );
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "struk-${pesanan.nomorPesanan}.html";
-            link.click();
-          }
-        </script>
-      </body>
-      </html>
-    `;
+    // Garis
+    doc.moveTo(30, doc.y).lineTo(550, doc.y).dash(2, { space: 2 }).stroke();
+    doc.moveDown();
 
-    res.send(html);
+    // Tabel Pesanan
+    doc.fontSize(12).text("DETAIL PESANAN", { underline: true });
+    doc.moveDown(0.5);
+
+    // Header table
+    doc.fontSize(10).text("Item", 50, doc.y, { continued: true });
+    doc.text("Qty", 200, doc.y, { continued: true });
+    doc.text("Harga", 300, doc.y, { continued: true });
+    doc.text("Subtotal", 400, doc.y);
+    doc.moveDown();
+
+    pesanan.items.forEach((item) => {
+      doc.text(item.nama, 50, doc.y, { continued: true });
+      doc.text(item.jumlah.toString(), 200, doc.y, { continued: true });
+      doc.text(`Rp ${item.harga.toLocaleString("id-ID")}`, 300, doc.y, { continued: true });
+      doc.text(`Rp ${(item.harga * item.jumlah).toLocaleString("id-ID")}`, 400, doc.y);
+    });
+
+    doc.moveDown(1);
+    doc.fontSize(12).text(`TOTAL: Rp ${pesanan.totalHarga.toLocaleString("id-ID")}`, { align: "right", bold: true });
+    doc.moveDown(2);
+
+    doc.fontSize(10).text("Simpan struk ini sebagai bukti pesanan.", { align: "center" });
+    doc.text("Untuk informasi lebih lanjut hubungi nomor di atas.", { align: "center" });
+    doc.moveDown();
+    doc.fontSize(12).text("TERIMA KASIH", { align: "center" });
+    doc.text("Selamat menikmati makanan Anda!", { align: "center" });
+
+    // Akhiri dokumen
+    doc.end();
 
   } catch (error) {
-    console.error('❌ Gagal menampilkan struk:', error);
+    console.error('❌ Gagal generate struk PDF:', error);
     res.status(500).send('<h2>Terjadi kesalahan</h2>');
   }
 });
+
 
 
 module.exports = router;
