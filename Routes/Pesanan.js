@@ -264,7 +264,7 @@ router.delete('/:id', verifyAdmin, async (req, res) => {
 // Endpoint untuk menampilkan struk sederhana
 router.get('/:id/struk', async (req, res) => {
   try {
-    const pesanan = await Pesanan.findById(req.params.id).populate('items.id');
+    const pesanan = await Pesanan.findById(req.params.id);
 
     if (!pesanan) {
       return res.status(404).send('<h2>❌ Pesanan tidak ditemukan</h2>');
@@ -281,7 +281,7 @@ router.get('/:id/struk', async (req, res) => {
       </tr>
     `).join('');
 
-    // HTML struk sederhana
+    // HTML struk kecil, center + tombol cetak
     const html = `
       <!DOCTYPE html>
       <html lang="id">
@@ -289,38 +289,71 @@ router.get('/:id/struk', async (req, res) => {
         <meta charset="UTF-8">
         <title>Struk Pesanan</title>
         <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          h2 { text-align: center; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          table, th, td { border: 1px solid black; }
-          th, td { padding: 8px; text-align: center; }
-          .total { font-weight: bold; font-size: 16px; text-align: right; }
+          body { 
+            font-family: Arial, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background: #f5f5f5;
+            height: 100vh;
+          }
+          .struk {
+            width: 280px; /* kecil kayak struk */
+            background: white;
+            padding: 15px;
+            border: 1px dashed #000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 12px;
+          }
+          h2 { text-align: center; margin-bottom: 10px; font-size: 14px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+          th, td { padding: 4px; text-align: center; border-bottom: 1px solid #ddd; font-size: 12px; }
+          .total { font-weight: bold; font-size: 13px; text-align: right; margin-top: 10px; }
+          .footer { text-align: center; margin-top: 15px; font-style: italic; }
+          .btn-print {
+            margin-top: 15px;
+            width: 100%;
+            padding: 6px;
+            font-size: 12px;
+            background: black;
+            color: white;
+            border: none;
+            cursor: pointer;
+          }
+          @media print {
+            body { background: white; }
+            .btn-print { display: none; } /* tombol hilang saat print */
+            .struk { box-shadow: none; border: none; }
+          }
         </style>
       </head>
       <body>
-        <h2>STRUK PESANAN</h2>
-        <p><b>Nomor Pesanan:</b> ${pesanan.nomorPesanan}</p>
-        <p><b>Nama Pemesan:</b> ${pesanan.namaPemesan}</p>
-        <p><b>Nomor Meja:</b> ${pesanan.nomorMeja}</p>
-        <p><b>Status:</b> ${pesanan.status}</p>
+        <div class="struk">
+          <h2>STRUK PESANAN</h2>
+          <p><b>No Pesanan:</b> ${pesanan.nomorPesanan}</p>
+          <p><b>Nama:</b> ${pesanan.namaPemesan}</p>
+          <p><b>Meja:</b> ${pesanan.nomorMeja}</p>
+          <p><b>Status:</b> ${pesanan.status}</p>
 
-        <table>
-          <thead>
-            <tr>
-              <th>No</th>
-              <th>Menu</th>
-              <th>Jumlah</th>
-              <th>Harga</th>
-              <th>Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemsHtml}
-          </tbody>
-        </table>
+          <table>
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Menu</th>
+                <th>Qty</th>
+                <th>Harga</th>
+                <th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
 
-        <p class="total">Total: Rp ${pesanan.totalHarga.toLocaleString('id-ID')}</p>
-        <p><i>Terima kasih sudah memesan 🙏</i></p>
+          <p class="total">Total: Rp ${pesanan.totalHarga.toLocaleString('id-ID')}</p>
+          <p class="footer">Terima kasih 🙏</p>
+          <button class="btn-print" onclick="window.print()">🖨 Cetak / Download</button>
+        </div>
       </body>
       </html>
     `;
@@ -332,6 +365,7 @@ router.get('/:id/struk', async (req, res) => {
     res.status(500).send('<h2>Terjadi kesalahan</h2>');
   }
 });
+
 
 
 
