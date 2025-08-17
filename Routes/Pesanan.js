@@ -263,7 +263,7 @@ router.delete('/:id', verifyAdmin, async (req, res) => {
 });
 
 // ============================
-// GET: Struk Pemesanan
+// GET: Struk Pembayaran
 // ============================
 
 router.get('/:id/struk', async (req, res) => {
@@ -376,6 +376,7 @@ router.get('/:id/struk', async (req, res) => {
     res.status(500).send('<h2>Terjadi kesalahan</h2>');
   }
 });
+
 
 
 module.exports = router;
