@@ -281,13 +281,14 @@ router.get('/:id/struk', async (req, res) => {
       </tr>
     `).join('');
 
-    // HTML struk kecil, center + tombol cetak
+    // HTML struk kecil + tombol download & kembali
     const html = `
       <!DOCTYPE html>
       <html lang="id">
       <head>
         <meta charset="UTF-8">
         <title>Struk Pesanan</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
         <style>
           body { 
             font-family: Arial, sans-serif; 
@@ -298,7 +299,7 @@ router.get('/:id/struk', async (req, res) => {
             height: 100vh;
           }
           .struk {
-            width: 280px; /* kecil kayak struk */
+            width: 280px;
             background: white;
             padding: 15px;
             border: 1px dashed #000;
@@ -310,8 +311,8 @@ router.get('/:id/struk', async (req, res) => {
           th, td { padding: 4px; text-align: center; border-bottom: 1px solid #ddd; font-size: 12px; }
           .total { font-weight: bold; font-size: 13px; text-align: right; margin-top: 10px; }
           .footer { text-align: center; margin-top: 15px; font-style: italic; }
-          .btn-print {
-            margin-top: 15px;
+          .btn {
+            margin-top: 10px;
             width: 100%;
             padding: 6px;
             font-size: 12px;
@@ -320,15 +321,10 @@ router.get('/:id/struk', async (req, res) => {
             border: none;
             cursor: pointer;
           }
-          @media print {
-            body { background: white; }
-            .btn-print { display: none; } /* tombol hilang saat print */
-            .struk { box-shadow: none; border: none; }
-          }
         </style>
       </head>
       <body>
-        <div class="struk">
+        <div class="struk" id="struk">
           <h2>STRUK PESANAN</h2>
           <p><b>No Pesanan:</b> ${pesanan.nomorPesanan}</p>
           <p><b>Nama:</b> ${pesanan.namaPemesan}</p>
@@ -352,8 +348,40 @@ router.get('/:id/struk', async (req, res) => {
 
           <p class="total">Total: Rp ${pesanan.totalHarga.toLocaleString('id-ID')}</p>
           <p class="footer">Terima kasih 🙏</p>
-          <button class="btn-print" onclick="window.print()">🖨 Cetak / Download</button>
+
+          <button class="btn" onclick="downloadPDF()">⬇️ Download Struk</button>
+          <button class="btn" onclick="window.location.href='/'">🏠 Kembali ke Home</button>
         </div>
+
+        <script>
+          async function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+              orientation: "p",
+              unit: "mm",
+              format: [80, 150]
+            });
+
+            doc.setFontSize(12);
+            doc.text("STRUK PESANAN", 40, 10, { align: "center" });
+
+            doc.setFontSize(9);
+            doc.text("No Pesanan: ${pesanan.nomorPesanan}", 5, 20);
+            doc.text("Nama: ${pesanan.namaPemesan}", 5, 26);
+
+            // tabel manual sederhana
+            let startY = 35;
+            ${JSON.stringify(pesanan.items)}.forEach((item, idx) => {
+              doc.text(item.nama + " x" + item.jumlah, 5, startY);
+              doc.text("Rp " + (item.harga * item.jumlah).toLocaleString("id-ID"), 60, startY, { align: "right" });
+              startY += 6;
+            });
+
+            doc.text("Total: Rp ${pesanan.totalHarga.toLocaleString('id-ID')}", 5, startY + 10);
+
+            doc.save("struk-${pesanan.nomorPesanan}.pdf");
+          }
+        </script>
       </body>
       </html>
     `;
